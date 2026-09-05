@@ -10,10 +10,26 @@ import Testing
 
 struct SpendingTrackerTests {
 
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
-        // Swift Testing Documentation
-        // https://developer.apple.com/documentation/testing
+    @Test func budgetGoalDirectionUsesIncomeForSavingsAndIncomeGoals() {
+        #expect(BudgetGoal(type: .income, amount: 100).isIncomeGoal)
+        #expect(BudgetGoal(type: .savings, amount: 100).isIncomeGoal)
+        #expect(!BudgetGoal(type: .expense, amount: 100).isIncomeGoal)
+    }
+
+    @Test func categoryGoalDirectionFollowsItsTransactionType() {
+        let incomeCategoryGoal = BudgetGoal(
+            type: .category,
+            amount: 100,
+            categoryTransactionType: .income
+        )
+        let expenseCategoryGoal = BudgetGoal(
+            type: .category,
+            amount: 100,
+            categoryTransactionType: .expense
+        )
+
+        #expect(incomeCategoryGoal.isIncomeGoal)
+        #expect(!expenseCategoryGoal.isIncomeGoal)
     }
 
 }

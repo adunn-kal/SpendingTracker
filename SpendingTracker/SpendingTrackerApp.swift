@@ -10,9 +10,13 @@ import SwiftData
 
 @main
 struct SpendingTrackerApp: App {
+    private let monthSelection = MonthSelection()
+
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Transaction.self,
+            Category.self,
+            BudgetGoal.self
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -26,6 +30,7 @@ struct SpendingTrackerApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(\.monthSelection, monthSelection)
         }
         .modelContainer(sharedModelContainer)
     }
