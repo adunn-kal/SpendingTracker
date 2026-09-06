@@ -29,9 +29,22 @@
 		779E9683304C8E4C00950AEB /* SpendingTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SpendingTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		770DB367304E09D7009AB792 /* Exceptions for "SpendingTracker" folder in "SpendingTracker" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 779E9669304C8E4A00950AEB /* SpendingTracker */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		779E966C304C8E4A00950AEB /* SpendingTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				770DB367304E09D7009AB792 /* Exceptions for "SpendingTracker" folder in "SpendingTracker" target */,
+			);
 			path = SpendingTracker;
 			sourceTree = "<group>";
 		};
@@ -401,6 +414,7 @@
 				DEVELOPMENT_TEAM = M4CJ5PQ9Z9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpendingTracker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Build a Budget";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -440,6 +454,7 @@
 				DEVELOPMENT_TEAM = M4CJ5PQ9Z9;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SpendingTracker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Build a Budget";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

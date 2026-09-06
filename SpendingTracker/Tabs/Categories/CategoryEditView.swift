@@ -24,10 +24,52 @@ struct CategoryEditView: View {
     @FocusState private var focusedField: Field?
     
     private let iconOptions = [
-        "tag", "cart", "house", "car", "fork.knife", "tv",
-        "gamecontroller", "airplane", "heart", "gift",
-        "dollarsign.circle", "creditcard", "bag", "book",
-        "bolt", "wifi", "phone", "pawprint", "cross.case", "graduationcap"
+        // Shopping & Retail
+        "tag", "cart", "bag", "basket", "storefront", "creditcard",
+        "banknote", "dollarsign.circle", "giftcard", "gift",
+        
+        // Home & Utilities
+        "house", "house.fill", "bolt", "wifi", "flame", "drop",
+        "lightbulb", "wrench.and.screwdriver", "hammer", "trash",
+        "washer", "sofa",
+        
+        // Transportation
+        "car", "car.fill", "fuelpump", "bus", "tram", "bicycle",
+        "airplane", "ferry", "parkingsign", "steeringwheel",
+        
+        // Food & Dining
+        "fork.knife", "cup.and.saucer", "wineglass", "takeoutbag.and.cup.and.straw",
+        "birthday.cake", "carrot",
+        
+        // Entertainment & Leisure
+        "tv", "gamecontroller", "film", "music.note", "ticket",
+        "popcorn", "party.popper", "theatermasks",
+        
+        // Health & Wellness
+        "heart", "cross.case", "pills", "stethoscope", "figure.walk",
+        "figure.run", "dumbbell", "bandage",
+        
+        // Personal & Family
+        "pawprint", "person", "person.2", "figure.2.and.child.holdinghands",
+        "teddybear",
+        
+        // Education & Work
+        "graduationcap", "book", "pencil", "briefcase", "printer",
+        "laptopcomputer", "building.2",
+        
+        // Communication & Tech
+        "phone", "envelope", "message", "camera", "headphones",
+        "applewatch", "iphone",
+        
+        // Finance & Bills
+        "creditcard.and.123", "chart.line.uptrend.xyaxis", "building.columns",
+        "doc.text", "receipt", "percent",
+        
+        // Travel
+        "map", "suitcase", "beach.umbrella", "tent", "globe",
+        
+        // Misc
+        "leaf", "star", "sparkles", "questionmark.circle"
     ]
     
     private var isEditing: Bool { category != nil }
