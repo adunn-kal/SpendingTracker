@@ -12,7 +12,7 @@ import SwiftData
 struct SpendingTrackerApp: App {
     private let monthSelection = MonthSelection()
 
-    var sharedModelContainer: ModelContainer = {
+    static let sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Transaction.self,
             Category.self,
@@ -32,6 +32,6 @@ struct SpendingTrackerApp: App {
             ContentView()
                 .environment(\.monthSelection, monthSelection)
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(Self.sharedModelContainer)
     }
 }
