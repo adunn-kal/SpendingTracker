@@ -79,7 +79,7 @@ struct SpendingView: View {
                     .padding()
                 
                 addTransactionButton
-                    .padding(.bottom, 8)
+                    .padding(.bottom, 16)
             }
             .navigationTitle("Spending")
             .navigationBarTitleDisplayMode(.inline)
