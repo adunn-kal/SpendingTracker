@@ -25,7 +25,7 @@ struct TransactionsView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 monthSelector
-                
+                Spacer()
                 Divider()
 
                 ScrollView {
