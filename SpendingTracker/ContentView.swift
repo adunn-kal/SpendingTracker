@@ -23,6 +23,9 @@ struct ContentView: View {
             CategoriesView()
                 .tabItem { Label("Categories", systemImage: "tag") }
             
+//            ImportingView()
+//                .tabItem { Label("Import", systemImage: "tag") }
+            
 //            TrendingView()
 //                .tabItem { Label("Trends", systemImage: "chart.line.uptrend.xyaxis") }
         }
