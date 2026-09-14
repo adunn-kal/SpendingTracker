@@ -64,25 +64,27 @@ struct BudgetView: View {
                 monthSelector
                 Spacer()
                 Divider()
-
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        if activeGoals.isEmpty {
-                            ContentUnavailableView(
-                                "No Budget Goals",
-                                systemImage: "target",
-                                description: Text("Add a goal to track your progress for this month.")
-                            )
-                            .padding(.top, 48)
-                        } else {
-                            goalSection(title: "Income", goals: incomeGoals)
-                            goalSection(title: "Expenses", goals: expenseGoals)
+                
+                ZStack(alignment: .bottom) {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            if activeGoals.isEmpty {
+                                ContentUnavailableView(
+                                    "No Budget Goals",
+                                    systemImage: "target",
+                                    description: Text("Add a goal to track your progress for this month.")
+                                )
+                                .padding(.top, 48)
+                            } else {
+                                goalSection(title: "Income", goals: incomeGoals)
+                                goalSection(title: "Expenses", goals: expenseGoals)
+                            }
                         }
                     }
+                    
+                    addGoalButton
+                        .padding(.vertical, 16)
                 }
-
-                addGoalButton
-                    .padding(.vertical, 16)
             }
             .navigationTitle("Budget")
             .navigationBarTitleDisplayMode(.inline)

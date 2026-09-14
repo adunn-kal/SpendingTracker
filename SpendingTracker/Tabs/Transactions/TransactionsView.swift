@@ -81,26 +81,28 @@ struct TransactionsView: View {
                 searchAndFilterBar
                 Divider()
 
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(filteredTransactions) { occurrence in
-                            TransactionRow(occurrence: occurrence)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    editingOccurrence = occurrence
-                                }
-                                .padding(.horizontal)
-                        }
-                        if filteredTransactions.isEmpty {
-                            Text(emptyStateMessage)
-                                .foregroundStyle(.secondary)
-                                .padding(.top, 32)
+                ZStack(alignment: .bottom) {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredTransactions) { occurrence in
+                                TransactionRow(occurrence: occurrence)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        editingOccurrence = occurrence
+                                    }
+                                    .padding(.horizontal)
+                            }
+                            if filteredTransactions.isEmpty {
+                                Text(emptyStateMessage)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 32)
+                            }
                         }
                     }
+                    
+                    addButton
+                        .padding(.bottom, 16)
                 }
-
-                addButton
-                    .padding(.bottom, 16)
             }
             .navigationTitle("Transactions")
             .navigationBarTitleDisplayMode(.inline)
@@ -255,5 +257,41 @@ struct TransactionsView: View {
 
 
 #Preview {
-    TransactionsView()
+    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let container = try! ModelContainer(for: Transaction.self, Category.self, configurations: config)
+    
+    let context = container.mainContext
+    
+    let salary = Category(name: "Salary", icon: "dollarsign.circle", colorHex: "#34C759")
+    let selling = Category(name: "Selling", icon: "tag", colorHex: "#30B0C7")
+    let groceries = Category(name: "Groceries", icon: "cart", colorHex: "#FF3B30")
+    let rent = Category(name: "Rent", icon: "house", colorHex: "#FF9500")
+    let entertainment = Category(name: "Entertainment", icon: "tv", colorHex: "#AF52DE")
+    
+    [salary, selling, groceries, rent, entertainment].forEach { context.insert($0) }
+    
+    let now = Date.now
+    
+    let transactions = [
+        Transaction(date: now, amount: 3000, type: .income, category: salary),
+        Transaction(date: now, amount: 250, type: .income, category: selling),
+        Transaction(date: now, amount: 900, type: .expense, category: rent),
+        Transaction(date: now, amount: 425.50, type: .expense, category: groceries),
+        Transaction(date: now, amount: 120, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 60, type: .expense, category: groceries),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment),
+        Transaction(date: now, amount: 40, type: .expense, category: entertainment)
+    ]
+    
+    transactions.forEach { context.insert($0) }
+    
+    return TransactionsView()
+        .modelContainer(container)
 }
