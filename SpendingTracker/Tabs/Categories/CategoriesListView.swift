@@ -26,71 +26,24 @@ struct CategoriesListView: View {
         var id: String { rawValue }
     }
 
-    // Build quick lookup maps for last-used date and usage count per category
-    private var categoryLastUsed: [PersistentIdentifier: Date] {
-        var map: [PersistentIdentifier: Date] = [:]
-        for txn in transactions {
-            if let cat = txn.category {
-                let id: PersistentIdentifier = cat.persistentModelID
-                if let existing = map[id] {
-                    map[id] = max(existing, txn.date)
-                } else {
-                    map[id] = txn.date
-                }
-            }
-        }
-        return map
-    }
-
-    private var categoryUseCount: [PersistentIdentifier: Int] {
-        var map: [PersistentIdentifier: Int] = [:]
-        for txn in transactions {
-            if let cat = txn.category {
-                let id: PersistentIdentifier = cat.persistentModelID
-                map[id, default: 0] += 1
-            }
-        }
-        return map
-    }
-
     private var filteredAndSortedCategories: [Category] {
-        // Filter by search text (case-insensitive, contains)
-        let filtered: [Category]
-        if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            filtered = categories
-        } else {
-            let query = searchText.lowercased()
-            filtered = categories.filter { $0.name.lowercased().contains(query) }
-        }
-
-        // Sort based on selected mode
         switch sortMode {
         case .recent:
-            return filtered.sorted { (lhs: Category, rhs: Category) -> Bool in
-                let lID: PersistentIdentifier = lhs.persistentModelID
-                let rID: PersistentIdentifier = rhs.persistentModelID
-                let lDate: Date = categoryLastUsed[lID] ?? .distantPast
-                let rDate: Date = categoryLastUsed[rID] ?? .distantPast
-                if lDate == rDate {
-                    return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
-                }
-                return lDate > rDate
-            }
+            return CategoryOrdering.mostRecent(categories: categories, transactions: transactions, searchText: searchText)
         case .alphabetical:
+            let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let filtered: [Category]
+            if trimmed.isEmpty {
+                filtered = categories
+            } else {
+                let query = trimmed.lowercased()
+                filtered = categories.filter { $0.name.lowercased().contains(query) }
+            }
             return filtered.sorted {
                 $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
             }
         case .mostUsed:
-            return filtered.sorted { (lhs: Category, rhs: Category) -> Bool in
-                let lID: PersistentIdentifier = lhs.persistentModelID
-                let rID: PersistentIdentifier = rhs.persistentModelID
-                let lCount: Int = categoryUseCount[lID] ?? 0
-                let rCount: Int = categoryUseCount[rID] ?? 0
-                if lCount == rCount {
-                    return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
-                }
-                return lCount > rCount
-            }
+            return CategoryOrdering.mostUsed(categories: categories, transactions: transactions, searchText: searchText)
         }
     }
     
@@ -172,4 +125,3 @@ struct CategoriesListView: View {
         }
     }
 }
-

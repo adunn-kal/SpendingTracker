@@ -5,6 +5,7 @@
 
 import AppIntents
 import SwiftData
+import Foundation
 
 /// A category the user has created in Spending Tracker, made available to Siri and Shortcuts.
 struct TransactionCategoryEntity: AppEntity, Identifiable {
@@ -44,9 +45,8 @@ struct TransactionCategoryQuery: EntityQuery {
 
     @MainActor
     private func fetchCategories() throws -> [TransactionCategoryEntity] {
-        let descriptor = FetchDescriptor<Category>(sortBy: [SortDescriptor(\Category.name)])
-        return try SpendingTrackerApp.sharedModelContainer.mainContext
-            .fetch(descriptor)
-            .map(TransactionCategoryEntity.init(category:))
+        let context = SpendingTrackerApp.sharedModelContainer.mainContext
+        let categories = try CategoryOrdering.fetchMostRecent(from: context)
+        return categories.map(TransactionCategoryEntity.init(category:))
     }
 }
