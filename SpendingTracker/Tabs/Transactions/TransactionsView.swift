@@ -123,6 +123,22 @@ struct TransactionsView: View {
                     )
                 }
             }
+            .contentShape(Rectangle())
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        let horizontal = value.translation.width
+                        let vertical = value.translation.height
+                        
+                        guard abs(horizontal) > abs(vertical), abs(horizontal) > 50 else { return }
+                        
+                        if horizontal < 0 {
+                            changeMonth(by: 1)   // swipe left → next month
+                        } else {
+                            changeMonth(by: -1)  // swipe right → previous month
+                        }
+                    }
+            )
         }
     }
 

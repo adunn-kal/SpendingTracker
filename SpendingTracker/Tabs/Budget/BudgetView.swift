@@ -94,6 +94,22 @@ struct BudgetView: View {
             .sheet(item: $editingGoal) { goal in
                 BudgetGoalEditor(goal: goal, selectedMonth: selectedMonth)
             }
+            .contentShape(Rectangle())
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        let horizontal = value.translation.width
+                        let vertical = value.translation.height
+                        
+                        guard abs(horizontal) > abs(vertical), abs(horizontal) > 50 else { return }
+                        
+                        if horizontal < 0 {
+                            monthSelection.changeMonth(by: 1)
+                        } else {
+                            monthSelection.changeMonth(by: -1)
+                        }
+                    }
+            )
         }
     }
 
