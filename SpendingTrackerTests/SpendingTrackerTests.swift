@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftData
 import Testing
 @testable import SpendingTracker
 
@@ -90,5 +91,71 @@ struct SpendingTrackerTests {
         
         #expect(rangeOccurrences.count == 1)
         #expect(rangeOccurrences.first?.transaction.amount == 200)
+    }
+
+    @Test func csvImportParsesExportedFormatCorrectly() throws {
+        let importView = ImportTransactionsView()
+        let sampleCSV = #"""
+        Date,Category,Amount,Note
+        09/15/2026,Groceries,-85.50,Supermarket
+        09/15/2026,Salary,1500.00,Paycheck
+        09/16/2026,"Food, & Dining",-42.00,"Dinner at ""Joe's"""
+        """#
+
+        let rows = importView.parseCSV(content: sampleCSV)
+        #expect(rows.count == 3)
+        #expect(rows[0]["Date"] == "09/15/2026")
+        #expect(rows[0]["Category"] == "Groceries")
+        #expect(rows[0]["Amount"] == "-85.50")
+        #expect(rows[0]["Note"] == "Supermarket")
+
+        #expect(rows[1]["Amount"] == "1500.00")
+
+        #expect(rows[2]["Category"] == "Food, & Dining")
+        #expect(rows[2]["Note"] == "Dinner at \"Joe's\"")
+    }
+
+    @MainActor
+    @Test func csvImportPreviewsAndSavesTransactionsToModelContext() throws {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: Transaction.self, Category.self, configurations: config)
+        let context = container.mainContext
+
+        let importView = ImportTransactionsView()
+        let sampleCSV = """
+        Date,Category,Amount,Note
+        09/15/2026,Groceries,-85.50,Supermarket
+        09/15/2026,Salary,1500.00,Paycheck
+        """
+
+        let rows = importView.parseCSV(content: sampleCSV)
+        let (items, parseErrors) = importView.parseRowsToPreview(rows)
+
+        #expect(items.count == 2)
+        #expect(parseErrors.isEmpty)
+        #expect(items[0].type == .expense)
+        #expect(items[0].absAmount == 85.50)
+        #expect(items[1].type == .income)
+        #expect(items[1].absAmount == 1500.00)
+
+        // Save preview items using context
+        let (imported, saveErrors) = importView.savePendingItems(items)
+
+        #expect(imported == 2)
+        #expect(saveErrors.isEmpty)
+
+        let fetchDescriptor = FetchDescriptor<Transaction>()
+        let transactions = try context.fetch(fetchDescriptor)
+        #expect(transactions.count == 2)
+
+        let expense = transactions.first(where: { $0.type == .expense })
+        #expect(expense?.amount == 85.50)
+        #expect(expense?.category?.name == "Groceries")
+        #expect(expense?.note == "Supermarket")
+
+        let income = transactions.first(where: { $0.type == .income })
+        #expect(income?.amount == 1500.00)
+        #expect(income?.category?.name == "Salary")
+        #expect(income?.note == "Paycheck")
     }
 }

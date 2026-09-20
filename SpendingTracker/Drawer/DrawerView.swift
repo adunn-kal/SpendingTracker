@@ -10,7 +10,7 @@ struct DrawerView: View {
 
     var body: some View {
         List {
-            Section("Data") {
+            Section("Data Management") {
                 NavigationLink {
                     ExportTransactionsView()
                 } label: {
@@ -25,6 +25,25 @@ struct DrawerView: View {
                         }
                     } icon: {
                         Image(systemName: "square.and.arrow.up")
+                            .font(.title3)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+
+                NavigationLink {
+                    ImportTransactionsView()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Import")
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Text("Import transactions from CSV file")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "square.and.arrow.down")
                             .font(.title3)
                             .foregroundStyle(Color.accentColor)
                     }
