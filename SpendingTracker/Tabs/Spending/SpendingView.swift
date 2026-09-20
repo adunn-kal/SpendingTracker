@@ -12,6 +12,7 @@ struct SpendingView: View {
     @Query(sort: \Transaction.date) private var allTransactions: [Transaction]
     @Environment(\.monthSelection) private var monthSelection
     @State private var showingAddTransaction = false
+    var onOpenDrawer: (() -> Void)? = nil
     
     private var filteredTransactions: [TransactionOccurrence] {
         allTransactions.occurrences(in: monthSelection.selectedMonth)
@@ -83,6 +84,15 @@ struct SpendingView: View {
             }
             .navigationTitle("Spending")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        onOpenDrawer?()
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                    }
+                }
+            }
             .sheet(isPresented: $showingAddTransaction) {
                 AddTransactionView()
             }

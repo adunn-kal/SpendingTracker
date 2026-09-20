@@ -12,6 +12,7 @@ struct TransactionsView: View {
     @Query(sort: \Transaction.date, order: .reverse) private var allTransactions: [Transaction]
     @Environment(\.monthSelection) private var monthSelection
     @Environment(\.modelContext) private var modelContext
+    var onOpenDrawer: (() -> Void)? = nil
 
     @State private var showingAdd = false
     @State private var editingOccurrence: TransactionOccurrence?
@@ -106,6 +107,15 @@ struct TransactionsView: View {
             }
             .navigationTitle("Transactions")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        onOpenDrawer?()
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                    }
+                }
+            }
             .sheet(isPresented: $showingAdd) {
                 NavigationStack {
                     TransactionFormView() // Add mode

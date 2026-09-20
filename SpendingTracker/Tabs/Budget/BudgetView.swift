@@ -14,6 +14,7 @@ struct BudgetView: View {
     @Query(sort: \Transaction.date) private var allTransactions: [Transaction]
     @State private var showingNewGoal = false
     @State private var editingGoal: BudgetGoal?
+    var onOpenDrawer: (() -> Void)? = nil
 
     private var selectedMonth: Date {
         monthSelection.selectedMonth
@@ -88,6 +89,15 @@ struct BudgetView: View {
             }
             .navigationTitle("Budget")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        onOpenDrawer?()
+                    } label: {
+                        Image(systemName: "line.3.horizontal")
+                    }
+                }
+            }
             .sheet(isPresented: $showingNewGoal) {
                 BudgetGoalEditor(goal: nil, selectedMonth: selectedMonth)
             }

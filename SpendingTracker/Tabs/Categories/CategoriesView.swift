@@ -8,11 +8,22 @@
 import SwiftUI
 
 struct CategoriesView: View {
+    var onOpenDrawer: (() -> Void)? = nil
+
     var body: some View {
         NavigationStack {
             CategoriesListView()
                 .navigationTitle("Categories")
                 .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button {
+                            onOpenDrawer?()
+                        } label: {
+                            Image(systemName: "line.3.horizontal")
+                        }
+                    }
+                }
         }
     }
 }

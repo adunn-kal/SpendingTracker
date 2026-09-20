@@ -151,4 +151,59 @@ extension Transaction {
         }
         return occurrences
     }
+
+    func occurrences(from startDate: Date, to endDate: Date, calendar: Calendar = .current) -> [TransactionOccurrence] {
+        let rangeStart = calendar.startOfDay(for: startDate)
+        let rangeEnd = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: endDate) ?? endDate
+
+        if !isRecurring {
+            if date >= rangeStart && date <= rangeEnd {
+                return [TransactionOccurrence(transaction: self, date: date)]
+            }
+            return []
+        }
+
+        guard date <= rangeEnd else { return [] }
+
+        var occurrenceDate = date
+        while occurrenceDate < rangeStart {
+            guard let nextDate = nextOccurrence(after: occurrenceDate) else { return [] }
+            occurrenceDate = nextDate
+        }
+
+        var occurrences: [TransactionOccurrence] = []
+        while occurrenceDate <= rangeEnd {
+            let isWithinSeriesEnd = recurrenceEndDate == nil || occurrenceDate <= recurrenceEndDate!
+            let isWithinVersion = recurrenceVersionEndDate == nil || occurrenceDate < recurrenceVersionEndDate!
+            if isWithinSeriesEnd && isWithinVersion {
+                occurrences.append(TransactionOccurrence(transaction: self, date: occurrenceDate))
+            }
+
+            guard let nextDate = nextOccurrence(after: occurrenceDate) else { break }
+            occurrenceDate = nextDate
+        }
+        return occurrences
+    }
+
+    func allOccurrences(upTo maxDate: Date = .now, calendar: Calendar = .current) -> [TransactionOccurrence] {
+        if !isRecurring {
+            return [TransactionOccurrence(transaction: self, date: date)]
+        }
+
+        let rangeEnd = calendar.date(bySettingHour: 23, minute: 59, second: 59, of: maxDate) ?? maxDate
+        var occurrenceDate = date
+        var occurrences: [TransactionOccurrence] = []
+
+        while occurrenceDate <= rangeEnd {
+            let isWithinSeriesEnd = recurrenceEndDate == nil || occurrenceDate <= recurrenceEndDate!
+            let isWithinVersion = recurrenceVersionEndDate == nil || occurrenceDate < recurrenceVersionEndDate!
+            if isWithinSeriesEnd && isWithinVersion {
+                occurrences.append(TransactionOccurrence(transaction: self, date: occurrenceDate))
+            }
+
+            guard let nextDate = nextOccurrence(after: occurrenceDate) else { break }
+            occurrenceDate = nextDate
+        }
+        return occurrences
+    }
 }
