@@ -2,6 +2,8 @@
 //  DrawerView.swift
 //  SpendingTracker
 //
+//  Created by Alexander Dunn on 9/5/26.
+//
 
 import SwiftUI
 
@@ -10,6 +12,27 @@ struct DrawerView: View {
 
     var body: some View {
         List {
+            Section("Backups") {
+                NavigationLink {
+                    BackupsView()
+                } label: {
+                    Label {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("iCloud Backups & Sync")
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Text("Automatic cloud backup & status")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "icloud.fill")
+                            .font(.title3)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+            }
+
             Section("Data Management") {
                 NavigationLink {
                     ExportTransactionsView()

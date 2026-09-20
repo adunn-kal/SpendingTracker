@@ -18,12 +18,29 @@ struct SpendingTrackerApp: App {
             Category.self,
             BudgetGoal.self
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
+        let isCloudSyncEnabled = UserDefaults.standard.bool(forKey: "isICloudSyncEnabled")
+        let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = isCloudSyncEnabled ? .automatic : .none
+
+        let cloudConfig = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            cloudKitDatabase: cloudKitDatabase
+        )
 
         do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+            return try ModelContainer(for: schema, configurations: [cloudConfig])
         } catch {
-            fatalError("Could not create ModelContainer: \(error)")
+            print("Failed to initialize ModelContainer (\(error)). Falling back to local container.")
+            let fallbackConfig = ModelConfiguration(
+                schema: schema,
+                isStoredInMemoryOnly: false,
+                cloudKitDatabase: .none
+            )
+            do {
+                return try ModelContainer(for: schema, configurations: [fallbackConfig])
+            } catch {
+                fatalError("Could not create ModelContainer: \(error)")
+            }
         }
     }()
 

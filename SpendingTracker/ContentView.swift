@@ -34,7 +34,7 @@ struct ContentView: View {
 }
 
 #Preview {
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
+    let config = ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
     let container = try! ModelContainer(for: Transaction.self, Category.self, BudgetGoal.self, configurations: config)
     let context = container.mainContext
 
