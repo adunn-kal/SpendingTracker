@@ -9,13 +9,10 @@ import SwiftUI
 import SwiftData
 
 struct TransactionsView: View {
-    var onOpenDrawer: (() -> Void)? = nil
-
-    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Transaction.date, order: .reverse) private var allTransactions: [Transaction]
     @Environment(\.monthSelection) private var monthSelection
-
-    @Query(sort: \Transaction.date, order: .reverse) private var transactions: [Transaction]
-    @Query(sort: \Category.name) private var categories: [Category]
+    @Environment(\.modelContext) private var modelContext
+    var onOpenDrawer: (() -> Void)? = nil
 
     @State private var showingAdd = false
     @State private var editingOccurrence: TransactionOccurrence?
@@ -23,17 +20,26 @@ struct TransactionsView: View {
     @State private var selectedCategories: Set<Category> = []
     @State private var includeUncategorized = false
 
+    // MARK: - Filtering helpers
+
     private var monthOccurrences: [TransactionOccurrence] {
-        transactions
-            .flatMap { $0.occurrences(in: monthSelection.selectedMonth) }
-            .sorted { $0.date > $1.date }
+        allTransactions.occurrences(in: monthSelection.selectedMonth)
     }
 
+    // All categories present among this month's transactions, for the filter menu
     private var availableCategories: [Category] {
-        let categoryIDs = Set(monthOccurrences.compactMap { $0.transaction.category?.persistentModelID })
-        return categories.filter { categoryIDs.contains($0.persistentModelID) }
+        var seen = Set<Category>()
+        var result: [Category] = []
+        for occurrence in monthOccurrences {
+            if let category = occurrence.transaction.category, !seen.contains(category) {
+                seen.insert(category)
+                result.append(category)
+            }
+        }
+        return result.sorted { $0.name < $1.name }
     }
 
+    // Whether any transaction this month has no category, so we know whether to show the option
     private var hasUncategorizedTransactions: Bool {
         monthOccurrences.contains { $0.transaction.category == nil }
     }
@@ -42,38 +48,31 @@ struct TransactionsView: View {
         !selectedCategories.isEmpty || includeUncategorized
     }
 
-    private var filteredOccurrences: [TransactionOccurrence] {
-        monthOccurrences.filter { occurrence in
-            let matchesSearch: Bool
-            if searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                matchesSearch = true
-            } else {
-                let note = occurrence.transaction.note ?? ""
-                matchesSearch = note.localizedCaseInsensitiveContains(searchText)
+    private var filteredTransactions: [TransactionOccurrence] {
+        var occurrences = monthOccurrences.sorted { $0.date > $1.date }
+
+        // Apply search first across note OR category name
+        let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedSearch.isEmpty {
+            occurrences = occurrences.filter { occ in
+                let noteMatch = occ.transaction.note?.localizedCaseInsensitiveContains(trimmedSearch) ?? false
+                let categoryMatch = occ.transaction.category?.name.localizedCaseInsensitiveContains(trimmedSearch) ?? false
+                return noteMatch || categoryMatch
             }
+        }
 
-            let matchesCategory: Bool
-            if !isFiltering {
-                matchesCategory = true
-            } else {
-                let category = occurrence.transaction.category
-                let categoryMatches = category.map { selectedCategories.contains($0) } ?? false
-                let uncategorizedMatches = category == nil && includeUncategorized
-                matchesCategory = categoryMatches || uncategorizedMatches
+        // Then apply category filters
+        if isFiltering {
+            occurrences = occurrences.filter { occurrence in
+                if let category = occurrence.transaction.category {
+                    return selectedCategories.contains(category)
+                } else {
+                    return includeUncategorized
+                }
             }
-
-            return matchesSearch && matchesCategory
         }
-    }
 
-    private var groupedFilteredOccurrences: [(key: Date, value: [TransactionOccurrence])] {
-        let calendar = Calendar.current
-        let grouped = Dictionary(grouping: filteredOccurrences) { occurrence in
-            calendar.startOfDay(for: occurrence.date)
-        }
-        return grouped
-            .map { (key: $0.key, value: $0.value) }
-            .sorted { $0.key > $1.key }
+        return occurrences
     }
 
     var body: some View {
@@ -81,37 +80,33 @@ struct TransactionsView: View {
             VStack(spacing: 0) {
                 monthSelector
                 searchAndFilterBar
+                Divider()
 
-                if monthOccurrences.isEmpty {
-                    ContentUnavailableView(
-                        "No Transactions",
-                        systemImage: "tray",
-                        description: Text("No transactions recorded for this month.")
-                    )
-                } else if filteredOccurrences.isEmpty {
-                    ContentUnavailableView(
-                        "No Results",
-                        systemImage: "magnifyingglass",
-                        description: Text(emptyStateMessage)
-                    )
-                } else {
-                    List {
-                        ForEach(groupedFilteredOccurrences, id: \.key) { group in
-                            Section(header: Text(group.key.formatted(.dateTime.year().month().day()))) {
-                                ForEach(group.value) { occurrence in
-                                    TransactionRow(occurrence: occurrence)
-                                        .contentShape(Rectangle())
-                                        .onTapGesture {
-                                            editingOccurrence = occurrence
-                                        }
-                                }
+                ZStack(alignment: .bottom) {
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(filteredTransactions) { occurrence in
+                                TransactionRow(occurrence: occurrence)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        editingOccurrence = occurrence
+                                    }
+                                    .padding(.horizontal)
+                            }
+                            if filteredTransactions.isEmpty {
+                                Text(emptyStateMessage)
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 32)
                             }
                         }
                     }
-                    .listStyle(.insetGrouped)
+                    
+                    addButton
+                        .padding(.bottom, 16)
                 }
             }
             .navigationTitle("Transactions")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
@@ -144,9 +139,9 @@ struct TransactionsView: View {
                     .onEnded { value in
                         let horizontal = value.translation.width
                         let vertical = value.translation.height
-
+                        
                         guard abs(horizontal) > abs(vertical), abs(horizontal) > 50 else { return }
-
+                        
                         if horizontal < 0 {
                             changeMonth(by: 1)   // swipe left → next month
                         } else {

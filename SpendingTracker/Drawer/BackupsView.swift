@@ -70,7 +70,7 @@ struct BackupsView: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    Text("Your financial transactions and budgets are stored securely in your personal iCloud account. No one else—including the developer—has access to your data.")
+                    Text("Your financial transactions and budgets are stored securely in your personal iCloud account.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -84,7 +84,7 @@ struct BackupsView: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
                     }
-                    Text("If you get a new device or lose your phone, signing into your Apple ID will automatically restore all your Spending Tracker data.")
+                    Text("If you get a new device or lose your phone, signing into your Apple ID will automatically restore your data.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
