@@ -10,12 +10,15 @@ import SwiftUI
 
 @Model
 class Category {
-    var name: String
-    var icon: String        // SF Symbol name
-    var colorHex: String    // stored as hex string, converted to Color for charts/UI
+    var name: String = ""
+    var icon: String = "folder"
+    var colorHex: String = "#000000"
     
     @Relationship(deleteRule: .nullify, inverse: \Transaction.category)
-    var transactions: [Transaction] = []
+    var transactions: [Transaction]? = []
+    
+    @Relationship(deleteRule: .nullify)
+    var budgetGoals: [BudgetGoal]? = []
     
     init(name: String, icon: String, colorHex: String) {
         self.name = name

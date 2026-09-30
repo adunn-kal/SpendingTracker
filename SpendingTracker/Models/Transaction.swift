@@ -10,15 +10,15 @@ import Foundation
 
 @Model
 class Transaction {
-    var date: Date
-    var amount: Double
-    var type: TransactionType
+    var date: Date = Date.now
+    var amount: Double = 0.0
+    var type: TransactionType = TransactionType.expense
     var note: String?
     
     var category: Category?
     
     // Recurrence
-    var isRecurring: Bool
+    var isRecurring: Bool = false
     var recurrenceInterval: Int?
     var recurrenceUnit: RecurrenceUnit?
     var recurrenceEndDate: Date?

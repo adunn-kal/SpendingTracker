@@ -9,14 +9,14 @@ import SwiftUI
 import CloudKit
 
 struct BackupsView: View {
-    @AppStorage("isICloudSyncEnabled") private var isICloudSyncEnabled: Bool = false
+    @AppStorage("isICloudSyncEnabled") private var isICloudSyncEnabled: Bool = true
     @State private var accountStatus: CKAccountStatus?
     @State private var isLoadingStatus = true
     @State private var statusError: String?
 
     var body: some View {
         List {
-            Section(header: Text("iCloud Sync Status"), footer: Text("Note: Enabling or disabling iCloud synchronization requires restarting Spending Tracker for changes to take effect.")) {
+            Section(header: Text("iCloud Sync Status")) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(spacing: 12) {
                         Image(systemName: statusIcon)

@@ -158,4 +158,11 @@ struct SpendingTrackerTests {
         #expect(income?.category?.name == "Salary")
         #expect(income?.note == "Paycheck")
     }
+
+    @Test func trendingTimeRangeMonthsCount() {
+        #expect(TrendingTimeRange.threeMonths.rawValue == "3m")
+        #expect(TrendingTimeRange.sixMonths.rawValue == "6m")
+        #expect(TrendingTimeRange.oneYear.rawValue == "1y")
+        #expect(TrendingTimeRange.all.rawValue == "All")
+    }
 }

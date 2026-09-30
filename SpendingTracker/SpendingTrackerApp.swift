@@ -18,6 +18,8 @@ struct SpendingTrackerApp: App {
             Category.self,
             BudgetGoal.self
         ])
+        
+        UserDefaults.standard.register(defaults: ["isICloudSyncEnabled": true])
         let isCloudSyncEnabled = UserDefaults.standard.bool(forKey: "isICloudSyncEnabled")
         let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = isCloudSyncEnabled ? .automatic : .none
 
@@ -30,7 +32,7 @@ struct SpendingTrackerApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [cloudConfig])
         } catch {
-            print("Failed to initialize ModelContainer (\(error)). Falling back to local container.")
+            print("Failed to initialize CloudKit ModelContainer (\(error)). Falling back to local container.")
             let fallbackConfig = ModelConfiguration(
                 schema: schema,
                 isStoredInMemoryOnly: false,

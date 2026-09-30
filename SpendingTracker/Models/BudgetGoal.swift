@@ -2,21 +2,23 @@
 //  BudgetGoal.swift
 //  SpendingTracker
 //
+//  Created by Alexander Dunn on 9/5/26.
+//
 
 import Foundation
 import SwiftData
 
 @Model
 final class BudgetGoal {
-    var type: BudgetGoalType
-    var amount: Double
+    var type: BudgetGoalType = BudgetGoalType.expense
+    var amount: Double = 0.0
     /// The transaction type a category goal tracks. Overall goals derive their direction from `type`.
     var categoryTransactionType: TransactionType = TransactionType.expense
-    var effectiveStartDate: Date
+    var effectiveStartDate: Date = Date.now
     /// The first month this version no longer applies. A nil value means it continues indefinitely.
     var effectiveEndDate: Date?
 
-    @Relationship(deleteRule: .nullify)
+    @Relationship(deleteRule: .nullify, inverse: \Category.budgetGoals)
     var category: Category?
 
     init(
