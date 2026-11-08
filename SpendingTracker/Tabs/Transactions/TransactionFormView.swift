@@ -5,6 +5,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct TransactionFormView: View {
     @Environment(\.modelContext) private var modelContext
@@ -18,6 +19,7 @@ struct TransactionFormView: View {
     @State private var type: TransactionType = .expense
     @State private var date: Date = .now
     @State private var amount: Double = 0
+    @State private var isAmountFocused = false
     @State private var selectedCategory: Category?
     @State private var isRecurring = false
     @State private var recurrenceInterval = 1
@@ -29,7 +31,7 @@ struct TransactionFormView: View {
     @State private var showingSaveScopeSelection = false
     @State private var showingDeleteScopeSelection = false
 
-    private enum Field: Hashable { case amount, note }
+    private enum Field: Hashable { case note }
     private enum ChangeScope { case thisOccurrenceOnly, thisAndFutureOccurrences }
     @FocusState private var focusedField: Field?
 
@@ -55,11 +57,15 @@ struct TransactionFormView: View {
                     Text("Amount")
                     Spacer()
                     Text("$").foregroundStyle(.secondary)
-                    TextField("0.00", value: $amount, format: .number.precision(.fractionLength(2)))
-                        .keyboardType(.decimalPad)
-                        .multilineTextAlignment(.trailing)
-                        .foregroundStyle(tintColor)
-                        .focused($focusedField, equals: .amount)
+                    CurrencyTextField(
+                        amount: $amount,
+                        isFocused: Binding(
+                            get: { isAmountFocused },
+                            set: { isAmountFocused = $0 }
+                        ),
+                        textColor: type == .income ? .systemGreen : .systemRed
+                    )
+                    .frame(width: 120, height: 32)
                 }
 
                 NavigationLink {
@@ -120,7 +126,7 @@ struct TransactionFormView: View {
             if let transactionToEdit, onDelete != nil {
                 Section {
                     Button("Delete Transaction", role: .destructive) {
-                        focusedField = nil
+                        dismissKeyboard()
                         if transactionToEdit.isRecurring, occurrenceDate != nil {
                             showingDeleteScopeSelection = true
                         } else {
@@ -137,7 +143,7 @@ struct TransactionFormView: View {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    focusedField = nil
+                    dismissKeyboard()
                     if isEditingRecurring {
                         showingSaveScopeSelection = true
                     } else {
@@ -148,7 +154,7 @@ struct TransactionFormView: View {
             }
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Done") { focusedField = nil }
+                Button("Done") { dismissKeyboard() }
             }
         }
         .onAppear {
@@ -197,6 +203,11 @@ struct TransactionFormView: View {
             recurrenceSeriesID: seriesID,
             recurrenceVersionEndDate: versionEndDate
         )
+    }
+
+    private func dismissKeyboard() {
+        isAmountFocused = false
+        focusedField = nil
     }
 
     private func saveStandardTransaction() {
@@ -311,5 +322,119 @@ struct TransactionFormView: View {
             modelContext.delete(transaction)
         }
         dismiss()
+    }
+}
+
+private struct CurrencyTextField: UIViewRepresentable {
+    @Binding var amount: Double
+    @Binding var isFocused: Bool
+    let textColor: UIColor
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIView(context: Context) -> UITextField {
+        let textField = UITextField()
+        textField.delegate = context.coordinator
+        textField.keyboardType = .numberPad
+        textField.textAlignment = .right
+        textField.font = .preferredFont(forTextStyle: .body)
+        textField.adjustsFontForContentSizeCategory = true
+        textField.accessibilityLabel = "Amount"
+        textField.inputAccessoryView = context.coordinator.doneToolbar
+        return textField
+    }
+
+    func updateUIView(_ textField: UITextField, context: Context) {
+        context.coordinator.parent = self
+        textField.textColor = textColor
+
+        let formattedAmount = Self.formatted(amount)
+        if textField.text != formattedAmount {
+            textField.text = formattedAmount
+        }
+
+        if isFocused, !textField.isFirstResponder {
+            textField.becomeFirstResponder()
+        } else if !isFocused, textField.isFirstResponder {
+            textField.resignFirstResponder()
+        }
+
+        context.coordinator.moveCaretToEnd(in: textField)
+    }
+
+    static func formatted(_ amount: Double) -> String {
+        amount.formatted(.number.precision(.fractionLength(2)))
+    }
+
+    final class Coordinator: NSObject, UITextFieldDelegate {
+        var parent: CurrencyTextField
+
+        lazy var doneToolbar: UIToolbar = {
+            let toolbar = UIToolbar()
+            toolbar.items = [
+                UIBarButtonItem(systemItem: .flexibleSpace),
+                UIBarButtonItem(
+                    barButtonSystemItem: .done,
+                    target: self,
+                    action: #selector(doneButtonTapped)
+                )
+            ]
+            toolbar.sizeToFit()
+            return toolbar
+        }()
+
+        init(parent: CurrencyTextField) {
+            self.parent = parent
+        }
+
+        func textFieldDidBeginEditing(_ textField: UITextField) {
+            parent.isFocused = true
+            moveCaretToEnd(in: textField)
+        }
+
+        func textFieldDidEndEditing(_ textField: UITextField) {
+            parent.isFocused = false
+        }
+
+        func textFieldDidChangeSelection(_ textField: UITextField) {
+            moveCaretToEnd(in: textField)
+        }
+
+        @objc private func doneButtonTapped() {
+            parent.isFocused = false
+        }
+
+        func textField(
+            _ textField: UITextField,
+            shouldChangeCharactersIn range: NSRange,
+            replacementString string: String
+        ) -> Bool {
+            let currentDigits = (textField.text ?? "").filter(\.isNumber)
+            let digits: String
+
+            if string.isEmpty {
+                digits = String(currentDigits.dropLast())
+            } else {
+                digits = currentDigits + string.filter(\.isNumber)
+            }
+
+            let cents = Decimal(string: digits) ?? 0
+            parent.amount = NSDecimalNumber(decimal: cents).doubleValue / 100
+            textField.text = CurrencyTextField.formatted(parent.amount)
+            moveCaretToEnd(in: textField)
+            return false
+        }
+
+        func moveCaretToEnd(in textField: UITextField) {
+            let end = textField.endOfDocument
+            if let selectedRange = textField.selectedTextRange,
+               textField.compare(selectedRange.start, to: end) == .orderedSame,
+               textField.compare(selectedRange.end, to: end) == .orderedSame {
+                return
+            }
+            textField.selectedTextRange = textField.textRange(from: end, to: end)
+        }
     }
 }
