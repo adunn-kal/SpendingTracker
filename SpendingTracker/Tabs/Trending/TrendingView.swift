@@ -88,13 +88,6 @@ struct TrendingView: View {
             VStack(spacing: 12) {
                 // Header Controls
                 VStack(spacing: 8) {
-                    Picker("Chart Type", selection: $selectedTab) {
-                        ForEach(TrendingTab.allCases) { tab in
-                            Label(tab.rawValue, systemImage: tab.iconName).tag(tab)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-
                     HStack {
                         Text("Time Range")
                             .font(.caption)
@@ -112,29 +105,39 @@ struct TrendingView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
 
-                // Swipeable / Selectable Chart Views
-                TabView(selection: $selectedTab) {
+                switch selectedTab {
+                case .incomeVsSpending:
                     IncomeVsSpendingChartView(
                         monthsWindow: monthsWindow,
                         allTransactions: allTransactions
                     )
-                    .tag(TrendingTab.incomeVsSpending)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+                case .categoryTrends:
                     CategoryDifferenceChartView(
                         monthsWindow: monthsWindow,
                         allTransactions: allTransactions,
                         categories: categories
                     )
-                    .tag(TrendingTab.categoryTrends)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
 
+                case .budgetPerformance:
                     BudgetChartView(
                         monthsWindow: monthsWindow,
                         allTransactions: allTransactions,
                         budgetGoals: budgetGoals
                     )
-                    .tag(TrendingTab.budgetPerformance)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+
+                Picker("Chart Type", selection: $selectedTab) {
+                    ForEach(TrendingTab.allCases) { tab in
+                        Label(tab.rawValue, systemImage: tab.iconName).tag(tab)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
             .navigationTitle("Trending")
             .navigationBarTitleDisplayMode(.inline)
