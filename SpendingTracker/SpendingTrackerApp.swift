@@ -12,6 +12,11 @@ import SwiftData
 struct SpendingTrackerApp: App {
     private let monthSelection = MonthSelection()
 
+    static let isCloudKitSyncEnabledAtLaunch: Bool = {
+        UserDefaults.standard.register(defaults: ["isICloudSyncEnabled": false])
+        return UserDefaults.standard.bool(forKey: "isICloudSyncEnabled")
+    }()
+
     static let sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Transaction.self,
@@ -19,30 +24,16 @@ struct SpendingTrackerApp: App {
             BudgetGoal.self
         ])
         
-        UserDefaults.standard.register(defaults: ["isICloudSyncEnabled": true])
-        let isCloudSyncEnabled = UserDefaults.standard.bool(forKey: "isICloudSyncEnabled")
-        let cloudKitDatabase: ModelConfiguration.CloudKitDatabase = isCloudSyncEnabled ? .automatic : .none
-
         let cloudConfig = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: false,
-            cloudKitDatabase: cloudKitDatabase
+            cloudKitDatabase: isCloudKitSyncEnabledAtLaunch ? .automatic : .none
         )
 
         do {
             return try ModelContainer(for: schema, configurations: [cloudConfig])
         } catch {
-            print("Failed to initialize CloudKit ModelContainer (\(error)). Falling back to local container.")
-            let fallbackConfig = ModelConfiguration(
-                schema: schema,
-                isStoredInMemoryOnly: false,
-                cloudKitDatabase: .none
-            )
-            do {
-                return try ModelContainer(for: schema, configurations: [fallbackConfig])
-            } catch {
-                fatalError("Could not create ModelContainer: \(error)")
-            }
+            fatalError("Could not create the CloudKit ModelContainer: \(error)")
         }
     }()
 

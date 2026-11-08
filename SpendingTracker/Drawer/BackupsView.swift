@@ -9,10 +9,19 @@ import SwiftUI
 import CloudKit
 
 struct BackupsView: View {
-    @AppStorage("isICloudSyncEnabled") private var isICloudSyncEnabled: Bool = true
+    @AppStorage("isICloudSyncEnabled") private var isICloudSyncEnabled = false
     @State private var accountStatus: CKAccountStatus?
     @State private var isLoadingStatus = true
     @State private var statusError: String?
+    @State private var showsRestartRequiredAlert = false
+
+    private var isCloudKitSyncEnabled: Bool {
+        SpendingTrackerApp.isCloudKitSyncEnabledAtLaunch
+    }
+
+    private var requiresRestart: Bool {
+        isICloudSyncEnabled != isCloudKitSyncEnabled
+    }
 
     var body: some View {
         List {
@@ -46,19 +55,14 @@ struct BackupsView: View {
                 }
                 .padding(.vertical, 4)
                 
-                Toggle(isOn: $isICloudSyncEnabled) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arrow.triangle.2.circlepath.icloud")
-                            .foregroundStyle(Color.accentColor)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("iCloud Synchronization")
-                                .font(.body)
-                            Text("Automatically backup and sync across devices")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                Toggle("iCloud Synchronization", isOn: $isICloudSyncEnabled)
+                    .onChange(of: isICloudSyncEnabled) { _, _ in
+                        showsRestartRequiredAlert = true
                     }
-                }
+
+                Text("When enabled, your transactions, categories, and budget goals sync through your private iCloud database. The change takes effect the next time you open the app.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             
             Section("About Cloud Backups") {
@@ -107,12 +111,22 @@ struct BackupsView: View {
         }
         .navigationTitle("Backups & Sync")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Restart Required", isPresented: $showsRestartRequiredAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your iCloud sync preference will apply the next time you open the app.")
+        }
         .task {
             await checkStatus()
         }
     }
 
     private func checkStatus() async {
+        guard isCloudKitSyncEnabled else {
+            isLoadingStatus = false
+            return
+        }
+
         isLoadingStatus = true
         do {
             let status = try await CKContainer.default().accountStatus()
@@ -129,7 +143,9 @@ struct BackupsView: View {
     }
 
     private var statusIcon: String {
-        guard isICloudSyncEnabled else { return "icloud.slash" }
+        if requiresRestart { return "arrow.clockwise.icloud" }
+        guard isCloudKitSyncEnabled else { return "icloud.slash" }
+        guard statusError == nil else { return "exclamationmark.icloud" }
         guard let accountStatus else { return "icloud" }
         switch accountStatus {
         case .available:
@@ -146,7 +162,9 @@ struct BackupsView: View {
     }
 
     private var statusColor: Color {
-        guard isICloudSyncEnabled else { return .secondary }
+        if requiresRestart { return .orange }
+        guard isCloudKitSyncEnabled else { return .secondary }
+        guard statusError == nil else { return .red }
         guard let accountStatus else { return .orange }
         switch accountStatus {
         case .available:
@@ -161,11 +179,22 @@ struct BackupsView: View {
     }
 
     private var statusTitle: String {
-        guard isICloudSyncEnabled else { return "iCloud Sync Disabled" }
+        if requiresRestart {
+            return "Restart Required"
+        }
+
+        guard isCloudKitSyncEnabled else {
+            return "iCloud Sync Off"
+        }
+
+        if statusError != nil {
+            return "Unable to Check iCloud"
+        }
+
         guard let accountStatus else { return "Checking Status" }
         switch accountStatus {
         case .available:
-            return "iCloud Connected & Syncing"
+            return "iCloud Account Available"
         case .noAccount:
             return "No iCloud Account Signed In"
         case .restricted:
@@ -180,11 +209,22 @@ struct BackupsView: View {
     }
 
     private var statusSubtitle: String {
-        guard isICloudSyncEnabled else { return "Turn on toggle below to enable" }
+        if requiresRestart {
+            return "Your preference will apply when you reopen the app."
+        }
+
+        guard isCloudKitSyncEnabled else {
+            return "Your data stays on this device."
+        }
+
+        if statusError != nil {
+            return "Review the error details below."
+        }
+
         guard let accountStatus else { return "Contacting Apple iCloud services..." }
         switch accountStatus {
         case .available:
-            return "Automatic backups & cross-device sync active"
+            return "CloudKit store initialized for automatic sync"
         case .noAccount:
             return "Sign in to iCloud in iOS Settings"
         case .restricted:
@@ -197,19 +237,28 @@ struct BackupsView: View {
     }
 
     private var statusDescription: String {
-        guard isICloudSyncEnabled else {
-            return "iCloud syncing is currently switched off in settings. Your data remains saved locally on this device."
+        if requiresRestart {
+            return "Close and reopen the app to apply your iCloud sync preference."
         }
+
+        guard isCloudKitSyncEnabled else {
+            return "iCloud syncing is disabled. Existing iCloud data remains in your private iCloud database, but changes on this device will not synchronize."
+        }
+
+        if let statusError {
+            return statusError
+        }
+
         guard let accountStatus else { return "" }
         switch accountStatus {
         case .available:
-            return "All your transactions, categories, and budget goals are stored securely in your private iCloud storage and kept up to date on all your devices."
+            return "Your transactions, categories, and budget goals are configured to synchronize through your private iCloud database."
         case .noAccount:
-            return "To enable cloud backups and sync across devices, open System Settings on your device and sign in with your Apple ID."
+            return "To sync across devices, sign in with the same Apple Account on each device."
         case .restricted:
             return "iCloud account access is restricted on this device due to parental controls or enterprise management profiles."
         case .couldNotDetermine, .temporarilyUnavailable:
-            return "Unable to determine iCloud status right now. SwiftData will automatically resume syncing when internet connection is re-established."
+            return "SwiftData will retry automatically when iCloud becomes available."
         @unknown default:
             return ""
         }
