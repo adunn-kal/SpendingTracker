@@ -221,34 +221,7 @@ struct TransactionsView: View {
 
     // MARK: - Month Selector
     private var monthSelector: some View {
-        HStack {
-            Button {
-                changeMonth(by: -1)
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-            }
-
-            Spacer()
-
-            Text(monthSelection.selectedMonth.formatted(.dateTime.month(.wide).year()))
-                .font(.headline)
-
-            Spacer()
-
-            Button {
-                changeMonth(by: 1)
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
-    }
-
-    private func changeMonth(by value: Int) {
-        monthSelection.changeMonth(by: value)
+        MonthSelectorView()
     }
 
     private var addButton: some View {

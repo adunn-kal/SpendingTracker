@@ -139,7 +139,7 @@ struct SpendingTrackerTests {
         #expect(items[1].absAmount == 1500.00)
 
         // Save preview items using context
-        let (imported, saveErrors) = importView.savePendingItems(items)
+        let (imported, saveErrors) = importView.savePendingItems(items, context: context)
 
         #expect(imported == 2)
         #expect(saveErrors.isEmpty)
@@ -164,5 +164,37 @@ struct SpendingTrackerTests {
         #expect(TrendingTimeRange.sixMonths.rawValue == "6m")
         #expect(TrendingTimeRange.oneYear.rawValue == "1y")
         #expect(TrendingTimeRange.all.rawValue == "All")
+    }
+
+    @Test func monthSelectionNavigationAndJumps() {
+        let selection = MonthSelection()
+        let cal = Calendar.current
+        let currentMonth = cal.startOfMonth(for: .now)
+
+        #expect(selection.isCurrentMonth)
+        #expect(selection.selectedMonth == currentMonth)
+
+        // Change month by +1
+        selection.changeMonth(by: 1)
+        #expect(!selection.isCurrentMonth)
+        let nextMonth = cal.date(byAdding: .month, value: 1, to: currentMonth)!
+        #expect(selection.selectedMonth == cal.startOfMonth(for: nextMonth))
+
+        // Change month by -2
+        selection.changeMonth(by: -2)
+        let prevMonth = cal.date(byAdding: .month, value: -1, to: currentMonth)!
+        #expect(selection.selectedMonth == cal.startOfMonth(for: prevMonth))
+
+        // Jump to current month
+        selection.jumpToCurrentMonth()
+        #expect(selection.isCurrentMonth)
+        #expect(selection.selectedMonth == currentMonth)
+
+        // Set specific year and month
+        selection.setMonth(year: 2024, month: 3)
+        let components = DateComponents(year: 2024, month: 3, day: 1)
+        let expectedMarch2024 = cal.date(from: components)!
+        #expect(selection.selectedMonth == expectedMarch2024)
+        #expect(!selection.isCurrentMonth)
     }
 }

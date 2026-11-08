@@ -383,7 +383,8 @@ struct ImportTransactionsView: View {
 
     // MARK: - Saving
 
-    func savePendingItems(_ items: [ImportPreviewItem]) -> (imported: Int, errors: [String]) {
+    func savePendingItems(_ items: [ImportPreviewItem], context: ModelContext? = nil) -> (imported: Int, errors: [String]) {
+        let activeContext = context ?? modelContext
         var imported = 0
         var errors: [String] = []
 
@@ -393,7 +394,7 @@ struct ImportTransactionsView: View {
                 if item.categoryName == "Uncategorized" {
                     category = nil
                 } else {
-                    category = try findOrCreateCategory(named: item.categoryName)
+                    category = try findOrCreateCategory(named: item.categoryName, in: activeContext)
                 }
 
                 let transaction = Transaction(
@@ -403,7 +404,7 @@ struct ImportTransactionsView: View {
                     note: item.note,
                     category: category
                 )
-                modelContext.insert(transaction)
+                activeContext.insert(transaction)
                 imported += 1
             } catch {
                 errors.append("Line \(item.lineNumber): \(error.localizedDescription)")
@@ -411,30 +412,31 @@ struct ImportTransactionsView: View {
         }
 
         do {
-            try modelContext.save()
+            try activeContext.save()
         } catch {
             errors.append("Failed to save changes: \(error.localizedDescription)")
         }
         return (imported, errors)
     }
 
-    private func findOrCreateCategory(named name: String) throws -> Category {
+    private func findOrCreateCategory(named name: String, in context: ModelContext? = nil) throws -> Category {
+        let activeContext = context ?? modelContext
         let exactFetch = FetchDescriptor<Category>(
             predicate: #Predicate<Category> { $0.name == name }
         )
-        if let exact = try modelContext.fetch(exactFetch).first {
+        if let exact = try activeContext.fetch(exactFetch).first {
             return exact
         }
 
         var allFetch = FetchDescriptor<Category>()
         allFetch.fetchLimit = 1000
-        let all = try modelContext.fetch(allFetch)
+        let all = try activeContext.fetch(allFetch)
         if let ci = all.first(where: { $0.name.compare(name, options: .caseInsensitive) == .orderedSame }) {
             return ci
         }
 
         let new = Category(name: name, icon: "tag", colorHex: "#007AFF")
-        modelContext.insert(new)
+        activeContext.insert(new)
         return new
     }
 }

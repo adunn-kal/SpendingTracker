@@ -124,30 +124,7 @@ struct BudgetView: View {
     }
 
     private var monthSelector: some View {
-        HStack {
-            Button {
-                monthSelection.changeMonth(by: -1)
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.title3)
-            }
-
-            Spacer()
-
-            Text(selectedMonth.formatted(.dateTime.month(.wide).year()))
-                .font(.headline)
-
-            Spacer()
-
-            Button {
-                monthSelection.changeMonth(by: 1)
-            } label: {
-                Image(systemName: "chevron.right")
-                    .font(.title3)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.top, 8)
+        MonthSelectorView()
     }
 
     private var addGoalButton: some View {
